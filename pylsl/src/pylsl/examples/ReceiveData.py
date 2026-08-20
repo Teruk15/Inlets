@@ -6,7 +6,7 @@ from pylsl import StreamInlet, resolve_byprop
 def main():
     # first resolve an EEG stream on the lab network
     print("looking for an EEG stream...")
-    streams = resolve_byprop(wait_time=3.0)
+    streams = resolve_byprop("type", "EEG", timeout=3.0)
     for s in streams:
         print("name:", s.name())
         print("type:", s.type())

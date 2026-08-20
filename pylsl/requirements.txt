@@ -1,0 +1,2 @@
+# requirements.txt
+pylsl===1.18.2
