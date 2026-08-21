@@ -20,7 +20,7 @@ def main():
 
 
     for s in streams:
-        if s.source_id() == 'HA-2016.03.01':
+        if s.source_id() == 'HA-2016.03.01':    
             print('g.Hiamp Found!')
             print('Start collecting data...')
             inlet = StreamInlet(s)
