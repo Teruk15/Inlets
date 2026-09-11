@@ -4,3 +4,4 @@
 .venv
 *.m~
 *.asv
+*.cfg
