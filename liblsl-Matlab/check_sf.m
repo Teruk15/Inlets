@@ -1,6 +1,5 @@
 % --- Load logged data ---
-ts_raw = squeeze(out.simout);
-ts_raw = ts_raw(1,:);
+ts_raw = squeeze(out.tsout);
 
 % Drop "no new sample" sentinel rows (ts == 0, from stepImpl's empty-vec branch)
 valid = ts_raw ~= 0;

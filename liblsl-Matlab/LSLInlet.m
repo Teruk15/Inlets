@@ -2,7 +2,8 @@ classdef LSLInlet < matlab.System
     properties
         StreamType = 'EEG'
         SourceID = 'HA-2016.03.01';
-        NumChannels = 16
+        NumChannels = 64
+        Fs = 4800
     end
     properties (Access = private)
         lib
@@ -73,7 +74,7 @@ classdef LSLInlet < matlab.System
 
         function sts = getSampleTimeImpl(obj)
             sts = createSampleTime(obj, 'Type', 'Discrete', ...
-                'SampleTime', 1/256, 'OffsetTime', 0);
+                'SampleTime', 1/obj.Fs, 'OffsetTime', 0);
         end
     end
 end
