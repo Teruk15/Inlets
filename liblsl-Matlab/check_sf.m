@@ -37,15 +37,15 @@ fprintf('\n--- Per-chunk effective fs (drift check) ---\n');
 disp(chunk_fs);
 fprintf('Range across chunks: %.6f Hz (max-min)\n', max(chunk_fs)-min(chunk_fs));
 
-% --- Visual check ---
-figure;
-subplot(2,1,1);
-plot(dt, '.');
-yline(mean(dt), 'r--');
-title('Sample-to-sample interval (dt) over run');
-xlabel('Sample index'); ylabel('dt (s)');
-
-subplot(2,1,2);
-plot(chunk_fs, '-o');
-title('Effective sample rate per chunk (drift check)');
-xlabel('Chunk #'); ylabel('fs (Hz)');
+% % --- Visual check ---
+% figure;
+% subplot(2,1,1);
+% plot(dt, '.');
+% yline(mean(dt), 'r--');
+% title('Sample-to-sample interval (dt) over run');
+% xlabel('Sample index'); ylabel('dt (s)');
+% 
+% subplot(2,1,2);
+% plot(chunk_fs, '-o');
+% title('Effective sample rate per chunk (drift check)');
+% xlabel('Chunk #'); ylabel('fs (Hz)');

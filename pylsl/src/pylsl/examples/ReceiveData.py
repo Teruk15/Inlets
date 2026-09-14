@@ -2,6 +2,38 @@ from scipy.signal import iirnotch, butter, lfilter, lfilter_zi, resample_poly
 from pylsl import StreamInlet, resolve_byprop
 import numpy as np
 
+class RateMonitor:
+    """Tracks effective native sample rate from LSL timestamps and
+    reports drift from the expected fs, mirroring the MATLAB ts check."""
+
+    def __init__(self, expected_fs, report_every=4800):  # ~every 1s @ 4800Hz
+        self.expected_fs = expected_fs
+        self.report_every = report_every
+        self.first_ts = None
+        self.last_ts = None
+        self.n_samples = 0
+
+    def update(self, timestamps):
+        if len(timestamps) == 0:
+            return
+        if self.first_ts is None:
+            self.first_ts = timestamps[0]
+
+        self.last_ts = timestamps[-1]
+        self.n_samples += len(timestamps)
+
+        if self.n_samples % self.report_every < len(timestamps):
+            self.report()
+
+    def report(self):
+        span = self.last_ts - self.first_ts
+        if span <= 0 or self.n_samples < 2:
+            return
+        effective_fs = (self.n_samples - 1) / span
+        off_hz = effective_fs - self.expected_fs
+        off_ppm = (off_hz / self.expected_fs) * 1e6
+        print(f"[rate check] effective fs = {effective_fs:.4f} Hz "
+              f"({off_hz:+.4f} Hz, {off_ppm:+.1f} ppm off from {self.expected_fs} Hz)")
 
 def process_chunk(chunk, zi_lp, zi_notch, zi_hp, b_notch, a_notch, b_hp, a_hp, b_lp, a_lp, ds_factor):
     """
@@ -127,13 +159,22 @@ def main():
 
     erps = []  # collected epochs, since erp was being overwritten in-place before
 
+    rate_monitor = RateMonitor(expected_fs=fs) 
+
     while True:
-        chunk, _ = inlet.pull_chunk(max_samples=pull_size_native)
+        chunk, timestamps = inlet.pull_chunk(timeout=1.0, max_samples=pull_size_native)
 
         if len(chunk) == 0:
+            print("empty pull...")
             continue
 
+        rate_monitor.update(timestamps)
+
         chunk = np.array(chunk, dtype=np.float64)
+        print(f"got chunk: {chunk.shape}")
+
+        if chunk.shape[1] - 1 != n_channel:
+            print(f"WARNING: expected {n_channel} EEG channels, got {chunk.shape[1]-1}")
 
         eeg_chunk = chunk[:, :-1]
         marker_chunk_raw = chunk[:, -1]
@@ -142,6 +183,7 @@ def main():
             eeg_chunk, zi_lp, zi_notch, zi_hp,
             b_notch, a_notch, b_hp, a_hp, b_lp, a_lp, ds_factor
         )
+        print(f"downsampled chunk: {eeg_chunk.shape}")
 
         # Rising-edge detection on the RAW marker channel, before decimation,
         # so a single-sample pulse can't be lost to the decimation stride.
@@ -161,6 +203,7 @@ def main():
         buffer[half:half + n_new, :] = eeg_chunk
 
         if not pending and edge_indices_ds.size > 0:
+            # print(f"trigger detected at native idx {edge_indices_native}")
             marker_idx = int(edge_indices_ds[0]) + half
             pending = True
 
@@ -169,6 +212,7 @@ def main():
 
             if enough:
                 erps.append(epoch)
+                # print(f"epoch #{len(erps)} collected")
                 pending = False
             else:
                 marker_idx -= half

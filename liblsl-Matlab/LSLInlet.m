@@ -2,7 +2,7 @@ classdef LSLInlet < matlab.System
     properties
         StreamType = 'EEG'
         SourceID = 'HA-2016.03.01';
-        NumChannels = 64
+        NumChannels = 97
         Fs = 4800
     end
     properties (Access = private)
