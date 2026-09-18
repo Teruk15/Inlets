@@ -297,6 +297,9 @@ def main():
     n_channel = 96  # EXCLUDE marker channel
     erp_time = 0.9  # 900 ms
 
+    pre_time = 0.3   # must match is_enough()'s pre_time
+    crop_time = 0.1  # ERSPCalculator default
+
     fs_ds = fs // ds_factor
 
     # Anti-aliasing lowpass, designed at ORIGINAL fs, runs first
@@ -345,11 +348,18 @@ def main():
     rate_monitor = RateMonitor(expected_fs=fs) 
     
     ersp_calc = ERSPCalculator(
-        n_channel=n_channel, sf_eff=fs_ds,
+        n_channel=n_channel, sf_eff=fs_ds, pre_time=pre_time, crop_time=crop_time
     )
-    
+    # ERSPCalculator crops crop_time off each end of the (pre+post) epoch;
+    # compute that final sample count once, up front, so the plotter can
+    # build its time axis at construction instead of on first update().
+    n_epoch_samples = round(fs_ds * erp_time)
+    n_cut = round(crop_time * fs_ds)
+    n_samples_crop = n_epoch_samples - 2 * n_cut
+ 
     plotter = ERSPGridPlotter(
         n_channel=n_channel, n_rows=8, n_cols=12, sf_eff=fs_ds,
+        pre_time=pre_time, crop_time=crop_time, n_samples_crop=n_samples_crop,
         ylim=(-0.5, 0.5),      # fix ylim to skip autoscale entirely (cheapest);
                                # set to None to autoscale (throttled) instead
         autoscale_every=5,
