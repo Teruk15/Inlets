@@ -4,6 +4,7 @@ classdef LSLInlet < matlab.System
         SourceID = 'HA-2016.03.01';
         NumChannels = 97
         Fs = 4800
+        MarkerChannelIdx = 97   % index of the marker channel within the stream
     end
     properties (Access = private)
         lib
@@ -28,50 +29,46 @@ classdef LSLInlet < matlab.System
                     'No stream found with type "%s" and source_id "%s".', ...
                     obj.StreamType, obj.SourceID);
             end
-
             actualChannels = matched_stream.channel_count();
             if actualChannels ~= obj.NumChannels
                 error('LSLInlet:ChannelMismatch', ...
                     'Stream reports %d channels but NumChannels property is set to %d. Update the block parameter.', ...
                     actualChannels, obj.NumChannels);
             end
-
             obj.inlet = lsl_inlet(matched_stream);
         end
 
-        function [ts, data] = stepImpl(obj)
+        function [ts, eegData, markerData] = stepImpl(obj)
             timeout = 0.1;
             [vec, ts_raw] = obj.inlet.pull_sample(timeout);
-
             if isempty(vec)
                 ts = 0;
-                data = zeros(1, obj.NumChannels);
+                eegData = zeros(1, obj.NumChannels - 1);
+                markerData = 0;
             else
                 ts = ts_raw;
-                data = vec(:)';
+                vec = vec(:)';
+                markerData = vec(obj.MarkerChannelIdx);
+                eegData = vec([1:obj.MarkerChannelIdx-1, obj.MarkerChannelIdx+1:end]);
             end
         end
 
-        function [s1, s2] = getOutputSizeImpl(obj)
-            s1 = [1, 1];                  % ts port
-            s2 = [1, obj.NumChannels];    % data port
+        function [s1, s2, s3] = getOutputSizeImpl(obj)
+            s1 = [1, 1];                      % ts port
+            s2 = [1, obj.NumChannels - 1];     % EEG data port
+            s3 = [1, 1];                       % marker port
         end
-
-        function [t1, t2] = getOutputDataTypeImpl(~)
+        function [t1, t2, t3] = getOutputDataTypeImpl(~)
             t1 = 'double';
             t2 = 'double';
+            t3 = 'double';
         end
-
-        function [c1, c2] = isOutputComplexImpl(~)
-            c1 = false;
-            c2 = false;
+        function [c1, c2, c3] = isOutputComplexImpl(~)
+            c1 = false; c2 = false; c3 = false;
         end
-
-        function [f1, f2] = isOutputFixedSizeImpl(~)
-            f1 = true;
-            f2 = true;
+        function [f1, f2, f3] = isOutputFixedSizeImpl(~)
+            f1 = true; f2 = true; f3 = true;
         end
-
         function sts = getSampleTimeImpl(obj)
             sts = createSampleTime(obj, 'Type', 'Discrete', ...
                 'SampleTime', 1/obj.Fs, 'OffsetTime', 0);
