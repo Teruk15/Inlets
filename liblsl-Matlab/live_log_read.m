@@ -8,3 +8,5 @@ nRow = nCh + 2; % time + data + marker
 nCol = floor(numel(raw) / nRow);
 
 raw = reshape(raw(1:nRow*nCol), nRow, nCol);
+
+raw = raw';

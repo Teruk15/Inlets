@@ -4,7 +4,7 @@ classdef LSLInlet < matlab.System
         SourceID = 'HA-2016.03.01';
         NumChannels = 97
         Fs = 4800
-        MarkerChannelIdx = 97   % index of the marker channel within the stream
+        MarkerChannelIdx = 97   % Index of the marker channel within the stream
     end
     properties (Access = private)
         lib
