@@ -243,23 +243,6 @@ def process_chunk(chunk, zi_lp, zi_notch, zi_hp, b_notch, a_notch, b_hp, a_hp, b
     return car_ref, zi_lp, zi_notch, zi_hp
 
 
-# def decimate_markers(marker_chunk, ds_factor):
-#     """
-#     Downsample the marker channel by taking the max over each group of
-#     ds_factor raw samples, so a single-sample trigger pulse is never lost
-#     to a stride that happens to skip it (unlike marker[::ds_factor]).
-
-#     NOTE: run rising-edge detection on the RAW marker channel before this,
-#     if possible — decimating first still shortens the pulse's visibility
-#     window. This function is kept as a fallback / for the decimated buffer
-#     path only.
-#     """
-#     n = marker_chunk.shape[0]
-#     n_trim = n - (n % ds_factor)
-#     trimmed = marker_chunk[:n_trim]
-#     return trimmed.reshape(-1, ds_factor).max(axis=1)
-
-
 def find_rising_edges(marker_chunk, last_val):
     """
     marker_chunk: 1-D array of raw (native-rate) marker values for this chunk.
@@ -294,7 +277,7 @@ def main():
     # Define necessary variables
     fs = 4800
     ds_factor = 4
-    n_channel = 96  # EXCLUDE marker channel
+    n_channel = 21  # EXCLUDE marker channel
     erp_time = 0.9  # 900 ms
 
     pre_time = 0.3   # must match is_enough()'s pre_time
@@ -311,7 +294,7 @@ def main():
     Q = 30.0
     b_notch, a_notch = iirnotch(notch_freq, Q, fs_ds)
 
-    hp_cutoff = 0.5
+    hp_cutoff = 0.1
     b_hp, a_hp = butter(3, hp_cutoff / (fs_ds / 2), btype='highpass')
 
     # Per-channel filter state (persists across chunks)
@@ -321,7 +304,7 @@ def main():
 
     # Find g.Hiamp and establish connection
     print("looking for an EEG stream...")
-    streams = resolve_byprop("type", "EEG", timeout=3.0)
+    streams = resolve_byprop("type", "eeg", timeout=3.0)
 
     for s in streams:
         if s.source_id() == 'HA-2016.03.01':
