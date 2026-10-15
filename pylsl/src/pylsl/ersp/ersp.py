@@ -7,7 +7,7 @@ class ERSPCalculator:
     def __init__(self, n_channel, sf_eff,
                  low_freq=70.0, high_freq=150.0, step_freq=5.0,
                  baseline_begin=-0.2, baseline_end=-0.1,
-                 pre_time=0.2, crop_time=0.1):
+                 pre_time=0.3, crop_time=0.1):
         
         self.n_channel = n_channel
         self.sf_eff = sf_eff
@@ -30,6 +30,8 @@ class ERSPCalculator:
  
     
     def build_wavelets(self, n_data):
+        """
+        """
         s = self.cycles / (2 * np.pi * self.freqs)
         max_s = s.max()
         time = np.arange(-5 * max_s, 5 * max_s + 1 / self.sf_eff, 1 / self.sf_eff)

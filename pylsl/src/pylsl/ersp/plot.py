@@ -8,6 +8,7 @@ class ERSPGridPlotter:
     def __init__(self, n_channel, n_rows, n_cols, sf_eff,
                  pre_time, crop_time, n_samples_crop,
                  ylim=None, autoscale_every=5, title="Live ERSP"):
+        
         assert n_rows * n_cols >= n_channel, "grid too small for n_channel"
         self.n_channel = n_channel
         self.sf_eff = sf_eff
@@ -46,11 +47,12 @@ class ERSPGridPlotter:
  
         self.fig.tight_layout()
         plt.show(block=False)
+        
  
     def update(self, erp_out_crop):
         """
-        erp_out_crop: (n_channel, n_samples_cropped) from ERSPCalculator.update()
         """
+
         n_ch, n_samp = erp_out_crop.shape
         assert n_samp == self.t.size, "n_samples_crop mismatch with constructor"
  
